@@ -3,7 +3,6 @@
 import React, { useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
-import { saveAs } from "file-saver";
 // Add this import at the top if 'docx' is installed:
 // import { Document, Packer, Paragraph, TextRun } from "docx";
 // If not installed, instruct user to install: npm install docx file-saver
@@ -152,7 +151,7 @@ export default function Home() {
   };
 
   // Download as .txt
-  const handleDownloadTxt = () => {
+  const handleDownloadTxt = async () => {
     let content = "";
     if (diarization && diarization.length > 0) {
       content += "--- Speaker Diarization ---\n";
@@ -170,6 +169,7 @@ export default function Home() {
       content += "--- Meeting Summary ---\n" + summary + "\n";
     }
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const { saveAs } = await import("file-saver");
     saveAs(blob, "meeting_transcript.txt");
   };
 
@@ -178,7 +178,7 @@ export default function Home() {
     // Only run if 'docx' is installed
     try {
       const { Document, Packer, Paragraph, TextRun } = await import("docx");
-      const doc = new Document();
+      const { saveAs } = await import("file-saver");
       const children = [];
       if (diarization && diarization.length > 0) {
         children.push(new Paragraph({ text: "Speaker Diarization", heading: "Heading1" }));
@@ -205,7 +205,13 @@ export default function Home() {
         children.push(new Paragraph({ text: "Meeting Summary", heading: "Heading1" }));
         children.push(new Paragraph(summary));
       }
-      doc.addSection({ children });
+      const doc = new Document({
+        sections: [
+          {
+            children,
+          },
+        ],
+      });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, "meeting_transcript.docx");
     } catch (e) {
