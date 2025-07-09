@@ -7,6 +7,8 @@ import styles from "./page.module.css";
 // import { Document, Packer, Paragraph, TextRun } from "docx";
 // If not installed, instruct user to install: npm install docx file-saver
 
+type DiarizationSegment = [number, number, string, string];
+
 export default function Home() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -17,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
-  const [diarization, setDiarization] = useState<any[] | null>(null);
+  const [diarization, setDiarization] = useState<DiarizationSegment[] | null>(null);
   const [diarizing, setDiarizing] = useState(false);
   const [diarizationError, setDiarizationError] = useState<string | null>(null);
   const [translation, setTranslation] = useState<string | null>(null);
@@ -74,8 +76,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Transcription failed");
       const data = await res.json();
       setTranscript(data.text || "No transcript returned.");
-    } catch (err: any) {
-      setError(err.message || "Unknown error");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -100,8 +102,8 @@ export default function Home() {
       const data = await res.json();
       // The result is in data.data[0], an array of segments: [start, end, speaker, text]
       setDiarization(data.data[0] || []);
-    } catch (err: any) {
-      setDiarizationError(err.message || "Unknown error");
+    } catch (err: unknown) {
+      setDiarizationError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setDiarizing(false);
     }
@@ -121,8 +123,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Translation failed");
       const data = await res.json();
       setTranslation(data.data[0] || "No translation returned.");
-    } catch (err: any) {
-      setTranslationError(err.message || "Unknown error");
+    } catch (err: unknown) {
+      setTranslationError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setTranslating(false);
     }
@@ -143,8 +145,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Summarization failed");
       const data = await res.json();
       setSummary(data.data[0] || "No summary returned.");
-    } catch (err: any) {
-      setSummaryError(err.message || "Unknown error");
+    } catch (err: unknown) {
+      setSummaryError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setSummarizing(false);
     }
@@ -214,7 +216,7 @@ export default function Home() {
       });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, "meeting_transcript.docx");
-    } catch (e) {
+    } catch {
       alert("docx or file-saver package not installed. Please run: npm install docx file-saver");
     }
   };
